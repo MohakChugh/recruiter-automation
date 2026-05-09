@@ -71,24 +71,26 @@ export function Ranking() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${jobId}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Candidate Ranking</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Candidate Ranking</h1>
           <p className="text-muted-foreground">{job.title} · {filtered.length} candidates</p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCSV}>
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
-        <Button size="sm" asChild>
-          <Link to={`/jobs/${jobId}/chat`}>
-            <MessageSquare className="h-4 w-4" />
-            Chat
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV}>
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button size="sm" asChild>
+            <Link to={`/jobs/${jobId}/chat`}>
+              <MessageSquare className="h-4 w-4" />
+              Chat
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="relative">
@@ -115,12 +117,12 @@ export function Ranking() {
             <Link key={result.id} to={`/jobs/${jobId}/candidates/${candidate.id}`}>
               <Card className="hover:shadow-sm transition-shadow cursor-pointer">
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex-shrink-0 w-8 text-center">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div className="flex-shrink-0 w-6 sm:w-8 text-center">
                       <span className="text-sm font-bold text-muted-foreground">#{index + 1}</span>
                     </div>
 
-                    <div className="flex-shrink-0 w-14">
+                    <div className="flex-shrink-0 w-10 sm:w-14">
                       <div className={`text-lg font-bold ${
                         result.finalScore >= 70 ? 'text-emerald-600' :
                         result.finalScore >= 40 ? 'text-amber-600' : 'text-red-500'

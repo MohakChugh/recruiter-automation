@@ -82,18 +82,18 @@ export function SetupModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg bg-background rounded-2xl shadow-2xl border overflow-hidden">
-        <div className="p-8 pb-6 text-center border-b bg-muted/30">
+      <div className="w-full max-w-lg mx-4 bg-background rounded-2xl shadow-2xl border overflow-hidden">
+        <div className="p-5 sm:p-8 pb-4 sm:pb-6 text-center border-b bg-muted/30">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
             <Sparkles className="h-7 w-7 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Welcome to Recruiter</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Welcome to Recruiter</h2>
           <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
             Download AI models to enable intelligent resume analysis. Models are cached locally for offline use.
           </p>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-5">
           <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
             <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-background border flex items-center justify-center">
               <Cpu className="h-4 w-4" />
@@ -174,7 +174,7 @@ export function SetupModal() {
           )}
         </div>
 
-        <div className="p-6 pt-2 space-y-3 border-t bg-muted/20">
+        <div className="p-4 sm:p-6 pt-2 space-y-3 border-t bg-muted/20">
           {!allReady ? (
             <>
               <Button

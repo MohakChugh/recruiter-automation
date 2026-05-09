@@ -10,9 +10,9 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Manage job profiles and track candidates
           </p>
@@ -25,7 +25,7 @@ export function Dashboard() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
@@ -61,7 +61,7 @@ export function Dashboard() {
       </div>
 
       {jobProfiles.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center p-12 text-center">
+        <Card className="flex flex-col items-center justify-center p-6 sm:p-12 text-center">
           <Briefcase className="h-12 w-12 text-muted-foreground/50 mb-4" />
           <CardTitle className="text-xl mb-2">No job profiles yet</CardTitle>
           <CardDescription className="mb-6">
@@ -75,7 +75,7 @@ export function Dashboard() {
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {jobProfiles.map(job => (
             <Link key={job.id} to={`/jobs/${job.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">

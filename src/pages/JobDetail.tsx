@@ -40,7 +40,7 @@ export function JobDetail() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{job.title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">{job.title}</h1>
           <p className="text-muted-foreground">{job.location} · {job.seniority} · {job.minYearsExperience}+ years</p>
         </div>
         <Button variant="ghost" size="icon" onClick={handleDelete} className="text-destructive hover:text-destructive">
@@ -48,7 +48,7 @@ export function JobDetail() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         <Link to={`/jobs/${job.id}/upload`}>
           <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
             <CardHeader>
@@ -82,7 +82,7 @@ export function JobDetail() {
 
       <Separator />
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Must-have Skills</CardTitle>

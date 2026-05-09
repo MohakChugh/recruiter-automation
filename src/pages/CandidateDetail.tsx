@@ -23,8 +23,8 @@ export function CandidateDetail() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{candidate.fullName}</h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold">{candidate.fullName}</h1>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
             {candidate.email && (
               <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{candidate.email}</span>
             )}
@@ -37,7 +37,7 @@ export function CandidateDetail() {
           </div>
         </div>
         {match && (
-          <div className={`text-3xl font-bold ${
+          <div className={`text-2xl sm:text-3xl font-bold ${
             match.finalScore >= 70 ? 'text-emerald-600' :
             match.finalScore >= 40 ? 'text-amber-600' : 'text-red-500'
           }`}>
@@ -57,7 +57,7 @@ export function CandidateDetail() {
               <p className="text-sm text-muted-foreground italic">{match.explanationDeep}</p>
             )}
 
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold">{match.tier1Score}</div>
                 <div className="text-xs text-muted-foreground">Tier 1 Score</div>
@@ -89,7 +89,7 @@ export function CandidateDetail() {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">

@@ -77,7 +77,7 @@ export function CreateJob() {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-2xl font-bold">Create Job Profile</h1>
+        <h1 className="text-xl sm:text-2xl font-bold">Create Job Profile</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -97,7 +97,7 @@ export function CreateJob() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <Input
@@ -126,7 +126,7 @@ export function CreateJob() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="minYears">Min Years Experience</Label>
                 <Input

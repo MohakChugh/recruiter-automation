@@ -8,10 +8,10 @@ export function StatusIndicator() {
   const overallStatus = health.allGreen ? 'green' : health.anyRed ? 'red' : 'yellow'
   const label = health.allGreen ? 'Full AI Mode' :
                 health.anyRed ? 'Degraded' :
-                (health.dbHealthy && health.geocodingOnline) ? 'Ready — AI models optional' : 'Partial Mode'
+                (health.dbHealthy && health.geocodingOnline) ? 'Ready' : 'Partial'
 
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground">
       <Circle
         className={cn(
           "h-2 w-2 fill-current",
@@ -20,7 +20,7 @@ export function StatusIndicator() {
           overallStatus === 'red' && "text-red-500"
         )}
       />
-      <span>{label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </div>
   )
 }

@@ -93,13 +93,13 @@ export function Chat() {
   ]
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)]">
       <div className="flex items-center gap-4 mb-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/jobs/${jobId}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold">Chat</h1>
+          <h1 className="text-lg sm:text-xl font-bold">Chat</h1>
           <p className="text-sm text-muted-foreground">{job.title}</p>
         </div>
         <Badge variant={isLLMReady() ? "default" : "secondary"} className="text-xs">
@@ -136,7 +136,7 @@ export function Chat() {
                   <Bot className="h-4 w-4" />
                 </div>
               )}
-              <Card className={`max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : ''}`}>
+              <Card className={`max-w-[90%] sm:max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : ''}`}>
                 <CardContent className="p-3">
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 </CardContent>

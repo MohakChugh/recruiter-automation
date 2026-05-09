@@ -80,7 +80,7 @@ export function Upload() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Upload Resumes</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Upload Resumes</h1>
           <p className="text-muted-foreground">{job.title}</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function Upload() {
         <Card>
           <CardContent className="p-8">
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-lg p-6 sm:p-12 text-center transition-colors ${
                 dragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
               }`}
               onDragOver={e => { e.preventDefault(); setDragActive(true) }}
@@ -132,7 +132,7 @@ export function Upload() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Progress value={progressPercent} />
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Parsed:</span>{' '}
                   <span className="font-medium">{processing.parsedFiles}/{processing.totalFiles}</span>
