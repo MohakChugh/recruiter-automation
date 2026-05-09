@@ -17,6 +17,13 @@ export class RecruiterDB extends Dexie {
       syncState: 'id',
       processingJobs: 'id, jobId, status'
     })
+    this.version(2).stores({
+      jobProfiles: 'id, title, createdAt',
+      candidates: 'id, email, fullName, parsingStatus, createdAt, *skills.name',
+      matchResults: 'id, jobId, candidateId, finalScore, scoringStatus, [jobId+candidateId]',
+      syncState: 'id',
+      processingJobs: 'id, jobId, status'
+    })
   }
 }
 

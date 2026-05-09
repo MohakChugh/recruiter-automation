@@ -1,16 +1,29 @@
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { useCandidate, useMatchResult } from '@/db/hooks'
+import { useCandidate, useMatchResult, updateCandidateSalary } from '@/db/hooks'
 
 export function CandidateDetail() {
   const { jobId, candidateId } = useParams<{ jobId: string; candidateId: string }>()
   const navigate = useNavigate()
   const candidate = useCandidate(candidateId)
   const match = useMatchResult(jobId, candidateId)
+  const [salaryEdit, setSalaryEdit] = useState('')
+  const [salaryCurrencyEdit, setSalaryCurrencyEdit] = useState('INR')
+  const [savingSalary, setSavingSalary] = useState(false)
+
+  useEffect(() => {
+    if (candidate?.salaryExpectation) {
+      setSalaryEdit(String(candidate.salaryExpectation))
+      setSalaryCurrencyEdit(candidate.salaryCurrency || 'INR')
+    }
+  }, [candidate])
 
   if (!candidate) {
     return <div className="flex items-center justify-center h-64"><p className="text-muted-foreground">Loading...</p></div>
@@ -45,6 +58,27 @@ export function CandidateDetail() {
           </div>
         )}
       </div>
+
+      {candidate.redFlags && candidate.redFlags.length > 0 && (
+        <Card className="border-red-200 bg-red-50/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2 text-red-700">
+              <AlertTriangle className="h-4 w-4" />
+              Red Flags ({candidate.redFlags.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {candidate.redFlags.map((flag, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <Badge variant={flag.severity === 'high' ? 'destructive' : 'warning'} className="text-xs mt-0.5">
+                  {flag.severity}
+                </Badge>
+                <span className="text-sm">{flag.description}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {match && (
         <Card>
@@ -125,6 +159,53 @@ export function CandidateDetail() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Salary Expectation</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Input
+              type="number"
+              value={salaryEdit}
+              onChange={e => setSalaryEdit(e.target.value)}
+              placeholder="e.g., 2000000"
+              className="max-w-[200px]"
+            />
+            <select
+              value={salaryCurrencyEdit}
+              onChange={e => setSalaryCurrencyEdit(e.target.value)}
+              className="rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+            >
+              <option value="INR">INR</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+            </select>
+            <Button
+              size="sm"
+              disabled={savingSalary}
+              onClick={async () => {
+                setSavingSalary(true)
+                await updateCandidateSalary(
+                  candidate.id,
+                  salaryEdit ? parseInt(salaryEdit) : null,
+                  salaryCurrencyEdit
+                )
+                setSavingSalary(false)
+              }}
+            >
+              Save
+            </Button>
+          </div>
+          {candidate.salaryExpectation && (
+            <p className="text-sm text-muted-foreground">
+              Current: {candidate.salaryCurrency} {candidate.salaryExpectation.toLocaleString()}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

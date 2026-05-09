@@ -22,6 +22,9 @@ export function CreateJob() {
   const [mustHaveSkills, setMustHaveSkills] = useState<string[]>([])
   const [niceToHaveInput, setNiceToHaveInput] = useState('')
   const [niceToHaveSkills, setNiceToHaveSkills] = useState<string[]>([])
+  const [salaryMin, setSalaryMin] = useState('')
+  const [salaryMax, setSalaryMax] = useState('')
+  const [salaryCurrency, setSalaryCurrency] = useState('INR')
   const [saving, setSaving] = useState(false)
 
   const handleAddMustHave = (e: React.KeyboardEvent) => {
@@ -61,7 +64,10 @@ export function CreateJob() {
         niceToHaveSkills,
         minYearsExperience: parseInt(minYears) || 0,
         maxYearsExperience: maxYears ? parseInt(maxYears) : null,
-        seniority
+        seniority,
+        salaryMin: salaryMin ? parseInt(salaryMin) : null,
+        salaryMax: salaryMax ? parseInt(salaryMax) : null,
+        salaryCurrency: salaryCurrency || null,
       })
       navigate(`/jobs/${id}`)
     } catch (error) {
@@ -220,6 +226,38 @@ export function CreateJob() {
                     </button>
                   </Badge>
                 ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Salary Range (optional)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="salaryMin">Minimum</Label>
+                <Input id="salaryMin" type="number" value={salaryMin} onChange={e => setSalaryMin(e.target.value)} placeholder="e.g., 1500000" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salaryMax">Maximum</Label>
+                <Input id="salaryMax" type="number" value={salaryMax} onChange={e => setSalaryMax(e.target.value)} placeholder="e.g., 2500000" />
+              </div>
+              <div className="space-y-2">
+                <Label>Currency</Label>
+                <Select value={salaryCurrency} onValueChange={setSalaryCurrency}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INR">INR</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="SGD">SGD</SelectItem>
+                    <SelectItem value="AED">AED</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>

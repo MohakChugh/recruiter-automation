@@ -9,8 +9,17 @@ export interface JobProfile {
   minYearsExperience: number
   maxYearsExperience: number | null
   seniority: string
+  salaryMin: number | null
+  salaryMax: number | null
+  salaryCurrency: string | null
   createdAt: number
   updatedAt: number
+}
+
+export interface RedFlag {
+  type: 'job_hopping' | 'short_tenure' | 'gap' | 'inconsistency'
+  severity: 'high' | 'medium' | 'low'
+  description: string
 }
 
 export interface Candidate {
@@ -30,6 +39,9 @@ export interface Candidate {
   extractionMethod: 'llm' | 'regex_fallback'
   parsingStatus: 'pending' | 'processing' | 'complete' | 'partial' | 'failed'
   sourceFileName: string
+  salaryExpectation: number | null
+  salaryCurrency: string | null
+  redFlags: RedFlag[] | null
   createdAt: number
 }
 

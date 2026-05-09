@@ -1,6 +1,8 @@
 import { db } from '../db/index'
 import type { Candidate, JobProfile } from '../db/schema'
 import { computeTier1Score } from './scoring'
+import { detectRedFlags } from './red-flags'
+import { findDuplicateCandidate } from '../db/hooks'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface ProcessingState {
@@ -153,6 +155,9 @@ export class ProcessingOrchestrator {
         extractionMethod: 'regex_fallback',
         parsingStatus: 'processing',
         sourceFileName: fileName,
+        salaryExpectation: null,
+        salaryCurrency: null,
+        redFlags: null,
         createdAt: Date.now()
       })
 
@@ -183,20 +188,55 @@ export class ProcessingOrchestrator {
   }
 
   private async handleExtraction(candidateId: string, data: any, method: 'llm' | 'regex_fallback', jobId: string) {
-    await db.candidates.update(candidateId, {
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      location: data.location,
-      yearsExperience: data.yearsExperience,
-      skills: data.skills,
-      titlesHistory: data.titlesHistory,
-      industries: data.industries,
-      education: data.education,
-      extractionMethod: method,
-      parsingStatus: 'complete',
-      embedding: null
-    })
+    const existingId = await findDuplicateCandidate(data.email, data.fullName, data.phone)
+
+    let finalCandidateId = candidateId
+    if (existingId && existingId !== candidateId) {
+      finalCandidateId = existingId
+      await db.candidates.delete(candidateId)
+      const existing = await db.candidates.get(existingId)
+      if (existing) {
+        const mergedSkills = [...existing.skills]
+        for (const skill of data.skills) {
+          if (!mergedSkills.some(s => s.name === skill.name)) {
+            mergedSkills.push(skill)
+          }
+        }
+        await db.candidates.update(existingId, {
+          skills: mergedSkills,
+          yearsExperience: Math.max(existing.yearsExperience || 0, data.yearsExperience || 0) || null,
+          titlesHistory: [...new Set([...existing.titlesHistory, ...data.titlesHistory])],
+          industries: [...new Set([...existing.industries, ...data.industries])],
+          parsingStatus: 'complete'
+        })
+      }
+    } else {
+      await db.candidates.update(candidateId, {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        location: data.location,
+        yearsExperience: data.yearsExperience,
+        skills: data.skills,
+        titlesHistory: data.titlesHistory,
+        industries: data.industries,
+        education: data.education,
+        extractionMethod: method,
+        parsingStatus: 'complete',
+        embedding: null,
+        salaryExpectation: data.salaryExpectation || null,
+        salaryCurrency: data.salaryCurrency || null,
+        redFlags: null
+      })
+    }
+
+    const updatedCandidate = await db.candidates.get(finalCandidateId)
+    if (updatedCandidate) {
+      const flags = detectRedFlags(updatedCandidate)
+      if (flags.length > 0) {
+        await db.candidates.update(finalCandidateId, { redFlags: flags })
+      }
+    }
 
     this.state.extractedFiles++
     this.notify()
@@ -204,7 +244,7 @@ export class ProcessingOrchestrator {
     if (data.location) {
       this.geoWorker?.postMessage({
         type: 'geocode',
-        id: candidateId,
+        id: finalCandidateId,
         location: data.location
       })
     } else {

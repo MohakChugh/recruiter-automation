@@ -22,6 +22,8 @@ interface ExtractedData {
   titlesHistory: string[]
   industries: string[]
   education: string
+  salaryExpectation: number | null
+  salaryCurrency: string | null
 }
 
 self.onmessage = async (event: MessageEvent<ExtractRequest>) => {
@@ -40,6 +42,7 @@ self.onmessage = async (event: MessageEvent<ExtractRequest>) => {
 }
 
 function extractWithRegex(text: string): ExtractedData {
+  const salary = extractSalary(text)
   return {
     fullName: extractName(text),
     email: extractEmail(text),
@@ -49,8 +52,49 @@ function extractWithRegex(text: string): ExtractedData {
     skills: extractSkills(text),
     titlesHistory: extractTitles(text),
     industries: extractIndustries(text),
-    education: extractEducation(text)
+    education: extractEducation(text),
+    salaryExpectation: salary.amount,
+    salaryCurrency: salary.currency
   }
+}
+
+function extractSalary(text: string): { amount: number | null; currency: string | null } {
+  const patterns = [
+    /(?:expected|current|ctc|salary|compensation)[\s:]*(?:inr|rs\.?|₹)\s*([\d,.]+)\s*(?:lpa|lakhs?|lacs?|per annum)/i,
+    /(?:expected|current|ctc|salary|compensation)[\s:]*\$\s*([\d,.]+)\s*(?:k|K|per year|annually)?/i,
+    /(?:expected|current|ctc|salary|compensation)[\s:]*(?:usd|eur|gbp)?\s*([\d,.]+)\s*(?:lpa|per annum|annual|yearly)?/i,
+    /([\d,.]+)\s*(?:lpa|lakhs? per annum)/i,
+    /\$\s*([\d,.]+)\s*(?:k|K)\s*(?:per year|annually|pa)?/i,
+  ]
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern)
+    if (match) {
+      let amount = parseFloat(match[1].replace(/,/g, ''))
+      let currency = 'INR'
+
+      if (text.slice(Math.max(0, (match.index || 0) - 10), (match.index || 0) + match[0].length + 10).match(/\$|usd/i)) {
+        currency = 'USD'
+      } else if (text.slice(Math.max(0, (match.index || 0) - 10), (match.index || 0) + match[0].length + 10).match(/eur|€/i)) {
+        currency = 'EUR'
+      } else if (text.slice(Math.max(0, (match.index || 0) - 10), (match.index || 0) + match[0].length + 10).match(/gbp|£/i)) {
+        currency = 'GBP'
+      }
+
+      if (match[0].toLowerCase().includes('lpa') || match[0].toLowerCase().includes('lakh')) {
+        amount = amount * 100000
+      }
+      if (match[0].toLowerCase().includes('k')) {
+        amount = amount * 1000
+      }
+
+      if (amount > 0 && amount < 100000000) {
+        return { amount: Math.round(amount), currency }
+      }
+    }
+  }
+
+  return { amount: null, currency: null }
 }
 
 function extractEmail(text: string): string | null {

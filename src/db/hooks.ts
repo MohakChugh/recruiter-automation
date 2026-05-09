@@ -92,3 +92,48 @@ export async function getMatchResultsWithCandidates(jobId: string) {
     )
     .sort((a, b) => b.result.finalScore - a.result.finalScore)
 }
+
+export async function deleteCandidates(candidateIds: string[], jobId: string) {
+  await db.transaction('rw', [db.matchResults, db.candidates], async () => {
+    for (const id of candidateIds) {
+      await db.matchResults.where('[jobId+candidateId]').equals([jobId, id]).delete()
+    }
+    for (const id of candidateIds) {
+      const otherRefs = await db.matchResults.where('candidateId').equals(id).count()
+      if (otherRefs === 0) await db.candidates.delete(id)
+    }
+  })
+}
+
+export async function truncateJobCandidates(jobId: string) {
+  await db.transaction('rw', [db.matchResults], async () => {
+    await db.matchResults.where('jobId').equals(jobId).delete()
+  })
+}
+
+export async function findDuplicateCandidate(
+  email: string | null,
+  fullName: string,
+  phone: string | null
+): Promise<string | null> {
+  if (email) {
+    const existing = await db.candidates.where('email').equals(email).first()
+    if (existing) return existing.id
+  }
+  if (fullName && fullName !== 'Unknown' && phone) {
+    const existing = await db.candidates
+      .where('fullName').equals(fullName)
+      .filter(c => c.phone === phone)
+      .first()
+    if (existing) return existing.id
+  }
+  return null
+}
+
+export async function updateCandidateSalary(
+  candidateId: string,
+  salaryExpectation: number | null,
+  salaryCurrency: string | null
+) {
+  await db.candidates.update(candidateId, { salaryExpectation, salaryCurrency })
+}
