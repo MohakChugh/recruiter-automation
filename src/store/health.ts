@@ -66,3 +66,13 @@ export const useSystemHealth = create<HealthState>((set, get) => ({
     }))
   }
 }))
+
+export async function initializeLLM(onProgress?: (info: { text: string; progress: number }) => void) {
+  try {
+    const { initLLM } = await import('@/workers/llm-engine')
+    await initLLM(onProgress)
+    useSystemHealth.getState().setHealth('llmLoaded', true)
+  } catch (e) {
+    console.error('LLM init failed:', e)
+  }
+}

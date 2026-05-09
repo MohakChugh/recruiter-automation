@@ -106,9 +106,9 @@ test.describe('Recruiter Automation E2E', () => {
     await page.goto('./')
     await page.getByRole('link', { name: 'Settings' }).click()
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
-    await expect(page.getByText('WebGPU')).toBeVisible()
-    await expect(page.getByText('Database')).toBeVisible()
-    await expect(page.getByText('Geocoding')).toBeVisible()
+    await expect(page.getByText('WebGPU', { exact: true })).toBeVisible()
+    await expect(page.getByText('Database', { exact: true })).toBeVisible()
+    await expect(page.getByText('Geocoding', { exact: true })).toBeVisible()
   })
 
   test('navigation works between pages', async ({ page }) => {
