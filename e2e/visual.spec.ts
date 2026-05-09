@@ -1,21 +1,36 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+
+async function skipSetup(page: Page) {
+  await page.goto('./')
+  await page.evaluate(() => localStorage.setItem('ra-setup-complete', 'true'))
+  await page.goto('./')
+}
 
 test.describe('Visual verification', () => {
-  test('dashboard page', async ({ page }) => {
+  test('setup modal on first visit', async ({ page }) => {
     await page.goto('./')
+    await expect(page.getByText('Welcome to Recruiter')).toBeVisible()
+    await expect(page.getByText('Download All Models')).toBeVisible()
+    await expect(page.getByText('LLM Model')).toBeVisible()
+    await expect(page.getByText('Embedding Model')).toBeVisible()
+    await page.screenshot({ path: 'e2e/screenshots/00-setup-modal.png', fullPage: true })
+  })
+
+  test('dashboard page', async ({ page }) => {
+    await skipSetup(page)
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
     await page.screenshot({ path: 'e2e/screenshots/01-dashboard.png', fullPage: true })
   })
 
   test('create job page', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'New Job Profile' }).click()
     await expect(page.getByRole('heading', { name: 'Create Job Profile' })).toBeVisible()
     await page.screenshot({ path: 'e2e/screenshots/02-create-job.png', fullPage: true })
   })
 
   test('job detail page', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'New Job Profile' }).click()
     await page.fill('#title', 'Senior Backend Engineer')
     await page.fill('#location', 'Bangalore, India')
@@ -34,7 +49,7 @@ test.describe('Visual verification', () => {
   })
 
   test('upload page', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'New Job Profile' }).click()
     await page.fill('#title', 'Upload Test Role')
     await page.fill('#location', 'Mumbai')
@@ -46,7 +61,7 @@ test.describe('Visual verification', () => {
   })
 
   test('ranking page empty state', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'New Job Profile' }).click()
     await page.fill('#title', 'Ranking Test')
     await page.fill('#location', 'Delhi')
@@ -58,7 +73,7 @@ test.describe('Visual verification', () => {
   })
 
   test('chat page', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'New Job Profile' }).click()
     await page.fill('#title', 'Chat Test')
     await page.fill('#location', 'Chennai')
@@ -70,7 +85,7 @@ test.describe('Visual verification', () => {
   })
 
   test('settings page', async ({ page }) => {
-    await page.goto('./')
+    await skipSetup(page)
     await page.getByRole('link', { name: 'Settings' }).click()
     await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible()
     await page.screenshot({ path: 'e2e/screenshots/07-settings.png', fullPage: true })

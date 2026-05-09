@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Recruiter Automation E2E', () => {
-  test('homepage loads with dashboard', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('./')
+    await page.evaluate(() => localStorage.setItem('ra-setup-complete', 'true'))
+    await page.goto('./')
+  })
+
+  test('homepage loads with dashboard', async ({ page }) => {
     await expect(page).toHaveTitle('Recruiter Automation')
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'New Job Profile' })).toBeVisible()
