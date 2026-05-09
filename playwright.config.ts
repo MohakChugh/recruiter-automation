@@ -8,6 +8,8 @@ export default defineConfig({
     baseURL: 'http://localhost:5173/recruiter-automation/',
     headless: true,
     screenshot: 'only-on-failure',
+    video: 'on',
+    viewport: { width: 1280, height: 720 },
   },
   webServer: {
     command: 'npm run dev',
