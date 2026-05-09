@@ -9,7 +9,7 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center">
+        <div className="mx-auto flex h-14 max-w-screen-2xl items-center px-6 sm:px-8 lg:px-10">
           <Link to="/" className="flex items-center gap-2 mr-6">
             <Sparkles className="h-5 w-5" />
             <span className="font-semibold">Recruiter</span>
@@ -32,7 +32,7 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="container max-w-screen-2xl py-6">
+      <main className="mx-auto max-w-screen-2xl px-6 sm:px-8 lg:px-10 py-8">
         <Outlet />
       </main>
     </div>
