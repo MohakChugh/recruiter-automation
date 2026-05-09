@@ -381,7 +381,7 @@ test.describe('Full Pipeline — 100 Resumes, 3 Jobs', () => {
     expect(count).toBeGreaterThan(0)
 
     // Take screenshot of ranking
-    await page.screenshot({ path: 'e2e/screenshots/11-ranking-with-candidates.png', fullPage: true })
+    await page.screenshot({ path: 'e2e/screenshots/11-ranking-with-candidates.png' })
 
     // Click first candidate row to see detail
     const firstCandidate = page.locator('a[href*="/candidates/"]').first()

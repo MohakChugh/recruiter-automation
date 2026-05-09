@@ -99,71 +99,12 @@ export class ProcessingOrchestrator {
       embeddingAvailable = isEmbeddingReady()
     } catch { /* Embedding not loaded */ }
 
-    this.extractWorker.onmessage = async (event) => {
+    this.extractWorker.onmessage = (event) => {
       const { id, data, method } = event.data
       const candidateId = candidateIds.get(id)
       if (!candidateId) return
 
-      // If LLM is available, try LLM extraction for better results
-      let finalData = data
-      let finalMethod = method
-
-      if (llmAvailable) {
-        try {
-          const { extractWithLLM } = await import('./llm-extract')
-          const candidate = await db.candidates.get(candidateId)
-          if (candidate?.rawResumeText) {
-            const llmResult = await extractWithLLM(candidate.rawResumeText)
-            if (llmResult) {
-              finalData = llmResult
-              finalMethod = 'llm'
-            }
-          }
-        } catch { /* Fall back to regex result */ }
-      }
-
-      // Compute embedding if available
-      let embedding: number[] | null = null
-      if (embeddingAvailable) {
-        try {
-          const { embed } = await import('./embedding')
-          const candidate = await db.candidates.get(candidateId)
-          if (candidate?.rawResumeText) {
-            embedding = await embed(candidate.rawResumeText.slice(0, 1000))
-          }
-        } catch { /* Skip embedding */ }
-      }
-
-      await db.candidates.update(candidateId, {
-        fullName: finalData.fullName,
-        email: finalData.email,
-        phone: finalData.phone,
-        location: finalData.location,
-        yearsExperience: finalData.yearsExperience,
-        skills: finalData.skills,
-        titlesHistory: finalData.titlesHistory,
-        industries: finalData.industries,
-        education: finalData.education,
-        extractionMethod: finalMethod,
-        parsingStatus: 'complete',
-        embedding
-      })
-
-      this.state.extractedFiles++
-      this.notify()
-
-      if (finalData.location) {
-        this.geoWorker?.postMessage({
-          type: 'geocode',
-          id: candidateId,
-          location: finalData.location
-        })
-      } else {
-        this.state.geocodedFiles++
-        this.notify()
-      }
-
-      await this.checkTier1Ready(jobId)
+      this.handleExtraction(candidateId, data, method, jobId)
     }
 
     this.geoWorker.onmessage = async (event) => {
@@ -239,6 +180,39 @@ export class ProcessingOrchestrator {
         fileType
       }, [arrayBuffer])
     }
+  }
+
+  private async handleExtraction(candidateId: string, data: any, method: 'llm' | 'regex_fallback', jobId: string) {
+    await db.candidates.update(candidateId, {
+      fullName: data.fullName,
+      email: data.email,
+      phone: data.phone,
+      location: data.location,
+      yearsExperience: data.yearsExperience,
+      skills: data.skills,
+      titlesHistory: data.titlesHistory,
+      industries: data.industries,
+      education: data.education,
+      extractionMethod: method,
+      parsingStatus: 'complete',
+      embedding: null
+    })
+
+    this.state.extractedFiles++
+    this.notify()
+
+    if (data.location) {
+      this.geoWorker?.postMessage({
+        type: 'geocode',
+        id: candidateId,
+        location: data.location
+      })
+    } else {
+      this.state.geocodedFiles++
+      this.notify()
+    }
+
+    await this.checkTier1Ready(jobId)
   }
 
   private async checkTier1Ready(jobId: string) {
