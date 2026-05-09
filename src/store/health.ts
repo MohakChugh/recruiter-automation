@@ -76,3 +76,13 @@ export async function initializeLLM(onProgress?: (info: { text: string; progress
     console.error('LLM init failed:', e)
   }
 }
+
+export async function initializeEmbedding(onProgress?: (info: { text: string; progress: number }) => void) {
+  try {
+    const { initEmbedding } = await import('@/workers/embedding')
+    await initEmbedding(onProgress)
+    useSystemHealth.getState().setHealth('embeddingLoaded', true)
+  } catch (e) {
+    console.error('Embedding init failed:', e)
+  }
+}

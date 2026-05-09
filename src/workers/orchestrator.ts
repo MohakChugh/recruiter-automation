@@ -4,7 +4,7 @@ import { computeTier1Score } from './scoring'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface ProcessingState {
-  status: 'idle' | 'parsing' | 'extracting' | 'geocoding' | 'scoring' | 'complete'
+  status: 'idle' | 'parsing' | 'extracting' | 'geocoding' | 'scoring' | 'tier2' | 'complete'
   totalFiles: number
   parsedFiles: number
   extractedFiles: number
@@ -61,7 +61,6 @@ export class ProcessingOrchestrator {
     }
     this.notify()
 
-    // Create processing job record
     await db.processingJobs.put({
       id: uuidv4(),
       jobId,
@@ -73,7 +72,6 @@ export class ProcessingOrchestrator {
       errors: []
     })
 
-    // Initialize workers
     this.parseWorker = new Worker(
       new URL('./parse.worker.ts', import.meta.url),
       { type: 'module' }
@@ -87,49 +85,87 @@ export class ProcessingOrchestrator {
       { type: 'module' }
     )
 
-    const parsedTexts: Map<string, { text: string; fileName: string }> = new Map()
-    const candidateIds: Map<string, string> = new Map() // fileId -> candidateId
+    const candidateIds: Map<string, string> = new Map()
+    let llmAvailable = false
+    let embeddingAvailable = false
 
-    // Set up extract worker handler
+    try {
+      const { isLLMReady } = await import('./llm-engine')
+      llmAvailable = isLLMReady()
+    } catch { /* LLM not loaded */ }
+
+    try {
+      const { isEmbeddingReady } = await import('./embedding')
+      embeddingAvailable = isEmbeddingReady()
+    } catch { /* Embedding not loaded */ }
+
     this.extractWorker.onmessage = async (event) => {
       const { id, data, method } = event.data
       const candidateId = candidateIds.get(id)
       if (!candidateId) return
 
+      // If LLM is available, try LLM extraction for better results
+      let finalData = data
+      let finalMethod = method
+
+      if (llmAvailable) {
+        try {
+          const { extractWithLLM } = await import('./llm-extract')
+          const candidate = await db.candidates.get(candidateId)
+          if (candidate?.rawResumeText) {
+            const llmResult = await extractWithLLM(candidate.rawResumeText)
+            if (llmResult) {
+              finalData = llmResult
+              finalMethod = 'llm'
+            }
+          }
+        } catch { /* Fall back to regex result */ }
+      }
+
+      // Compute embedding if available
+      let embedding: number[] | null = null
+      if (embeddingAvailable) {
+        try {
+          const { embed } = await import('./embedding')
+          const candidate = await db.candidates.get(candidateId)
+          if (candidate?.rawResumeText) {
+            embedding = await embed(candidate.rawResumeText.slice(0, 1000))
+          }
+        } catch { /* Skip embedding */ }
+      }
+
       await db.candidates.update(candidateId, {
-        fullName: data.fullName,
-        email: data.email,
-        phone: data.phone,
-        location: data.location,
-        yearsExperience: data.yearsExperience,
-        skills: data.skills,
-        titlesHistory: data.titlesHistory,
-        industries: data.industries,
-        education: data.education,
-        extractionMethod: method,
-        parsingStatus: 'complete'
+        fullName: finalData.fullName,
+        email: finalData.email,
+        phone: finalData.phone,
+        location: finalData.location,
+        yearsExperience: finalData.yearsExperience,
+        skills: finalData.skills,
+        titlesHistory: finalData.titlesHistory,
+        industries: finalData.industries,
+        education: finalData.education,
+        extractionMethod: finalMethod,
+        parsingStatus: 'complete',
+        embedding
       })
 
       this.state.extractedFiles++
       this.notify()
 
-      // Send for geocoding if location found
-      if (data.location) {
+      if (finalData.location) {
         this.geoWorker?.postMessage({
           type: 'geocode',
           id: candidateId,
-          location: data.location
+          location: finalData.location
         })
       } else {
         this.state.geocodedFiles++
         this.notify()
       }
 
-      // Check if we have enough for Tier 1
       await this.checkTier1Ready(jobId)
     }
 
-    // Set up geo worker handler
     this.geoWorker.onmessage = async (event) => {
       const { id, coords } = event.data
       if (coords) {
@@ -140,7 +176,6 @@ export class ProcessingOrchestrator {
       await this.checkTier1Ready(jobId)
     }
 
-    // Set up parse worker handler
     this.parseWorker.onmessage = async (event) => {
       const { fileId, fileName, text, success, error } = event.data
 
@@ -157,7 +192,6 @@ export class ProcessingOrchestrator {
       this.state.status = 'extracting'
       this.notify()
 
-      // Create candidate record
       const candidateId = uuidv4()
       candidateIds.set(fileId, candidateId)
 
@@ -181,9 +215,6 @@ export class ProcessingOrchestrator {
         createdAt: Date.now()
       })
 
-      parsedTexts.set(fileId, { text, fileName })
-
-      // Send to extraction worker
       this.extractWorker?.postMessage({
         type: 'extract',
         id: fileId,
@@ -192,7 +223,6 @@ export class ProcessingOrchestrator {
       })
     }
 
-    // Start parsing all files
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       const fileId = uuidv4()
@@ -214,7 +244,14 @@ export class ProcessingOrchestrator {
   private async checkTier1Ready(jobId: string) {
     const BATCH_SIZE = 50
 
-    if (this.state.tier1Ready) return
+    if (this.state.tier1Ready) {
+      // Continue scoring new candidates as they arrive
+      if (this.state.extractedFiles > this.state.scoredFiles) {
+        await this.runTier1Scoring(jobId)
+      }
+      return
+    }
+
     if (this.state.extractedFiles >= BATCH_SIZE ||
         (this.state.extractedFiles >= this.state.totalFiles && this.state.extractedFiles > 0)) {
       this.state.tier1Ready = true
@@ -229,6 +266,15 @@ export class ProcessingOrchestrator {
     const job = await db.jobProfiles.get(jobId)
     if (!job) return
 
+    // Compute job embedding if available
+    let jobEmbedding: number[] | null = null
+    try {
+      const { isEmbeddingReady, embed } = await import('./embedding')
+      if (isEmbeddingReady()) {
+        jobEmbedding = await embed(job.jdText.slice(0, 1000))
+      }
+    } catch { /* Skip */ }
+
     const candidates = await db.candidates
       .where('parsingStatus')
       .equals('complete')
@@ -242,17 +288,79 @@ export class ProcessingOrchestrator {
 
       if (existing) continue
 
-      const result = computeTier1Score(candidate, job, null)
+      const result = computeTier1Score(candidate, job, jobEmbedding)
       await db.matchResults.add(result)
       this.state.scoredFiles++
       this.notify()
     }
 
-    if (this.state.parsedFiles >= this.state.totalFiles &&
-        this.state.extractedFiles >= this.state.totalFiles - this.state.errors.length) {
+    // Check if all processing is complete
+    const allDone = this.state.parsedFiles >= this.state.totalFiles &&
+      this.state.extractedFiles >= this.state.totalFiles - this.state.errors.length
+
+    if (allDone) {
+      // Run Tier 2 on top candidates
+      await this.runTier2Scoring(jobId)
       this.state.status = 'complete'
       this.notify()
       this.cleanup()
+    }
+  }
+
+  private async runTier2Scoring(jobId: string) {
+    let llmAvailable = false
+    try {
+      const { isLLMReady } = await import('./llm-engine')
+      llmAvailable = isLLMReady()
+    } catch { /* No LLM */ }
+
+    if (!llmAvailable) return
+
+    this.state.status = 'tier2'
+    this.notify()
+
+    const job = await db.jobProfiles.get(jobId)
+    if (!job) return
+
+    const topResults = await db.matchResults
+      .where('jobId')
+      .equals(jobId)
+      .toArray()
+
+    const sorted = topResults.sort((a, b) => b.tier1Score - a.tier1Score).slice(0, 30)
+
+    const { generateTier2Analysis } = await import('./llm-extract')
+
+    for (const result of sorted) {
+      const candidate = await db.candidates.get(result.candidateId)
+      if (!candidate) continue
+
+      try {
+        const analysis = await generateTier2Analysis(
+          job.jdText,
+          job.location,
+          {
+            name: candidate.fullName,
+            location: candidate.location,
+            distanceKm: result.locationDistanceKm,
+            yearsExp: candidate.yearsExperience,
+            skills: candidate.skills.map(s => s.name),
+            titles: candidate.titlesHistory,
+            industries: candidate.industries
+          }
+        )
+
+        if (analysis) {
+          const finalScore = Math.round(result.tier1Score * 0.5 + analysis.score * 0.5)
+          await db.matchResults.update(result.id, {
+            tier2Score: analysis.score,
+            finalScore,
+            explanationDeep: analysis.explanation,
+            relocationLikelihood: analysis.relocation,
+            scoringStatus: 'tier2_complete'
+          })
+        }
+      } catch { /* Skip this candidate's tier2 */ }
     }
   }
 

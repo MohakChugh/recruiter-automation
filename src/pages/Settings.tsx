@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
-import { useSystemHealth, initializeLLM } from '@/store/health'
+import { useSystemHealth } from '@/store/health'
 import { Circle, Download, Upload, Cloud, Key, HardDrive } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,8 @@ export function Settings() {
   const health = useSystemHealth()
   const [llmProgress, setLlmProgress] = useState<{ text: string; progress: number } | null>(null)
   const [llmLoading, setLlmLoading] = useState(false)
+  const [embeddingProgress, setEmbeddingProgress] = useState<{ text: string; progress: number } | null>(null)
+  const [embeddingLoading, setEmbeddingLoading] = useState(false)
 
   const [token, setToken] = useState('')
   const [password, setPassword] = useState('')
@@ -26,12 +28,26 @@ export function Settings() {
   const handleDownloadLLM = async () => {
     setLlmLoading(true)
     try {
+      const { initializeLLM } = await import('@/store/health')
       await initializeLLM((info) => setLlmProgress(info))
       setLlmProgress(null)
     } catch (e) {
       setLlmProgress({ text: 'Failed to load model', progress: 0 })
     } finally {
       setLlmLoading(false)
+    }
+  }
+
+  const handleDownloadEmbedding = async () => {
+    setEmbeddingLoading(true)
+    try {
+      const { initializeEmbedding } = await import('@/store/health')
+      await initializeEmbedding((info) => setEmbeddingProgress(info))
+      setEmbeddingProgress(null)
+    } catch (e) {
+      setEmbeddingProgress({ text: 'Failed to load model', progress: 0 })
+    } finally {
+      setEmbeddingLoading(false)
     }
   }
 
@@ -181,6 +197,38 @@ export function Settings() {
               {!health.webgpuAvailable && (
                 <p className="text-xs text-destructive">WebGPU not available. Use Chrome or Edge for AI features.</p>
               )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Embedding Model
+          </CardTitle>
+          <CardDescription>
+            Download GTE-small (~33MB) for semantic matching between resumes and job descriptions
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {health.embeddingLoaded ? (
+            <div className="flex items-center gap-2">
+              <Badge variant="success">Model Loaded</Badge>
+              <span className="text-sm text-muted-foreground">Ready for semantic scoring</span>
+            </div>
+          ) : (
+            <>
+              {embeddingProgress && (
+                <div className="space-y-2">
+                  <Progress value={embeddingProgress.progress * 100} />
+                  <p className="text-xs text-muted-foreground">{embeddingProgress.text}</p>
+                </div>
+              )}
+              <Button onClick={handleDownloadEmbedding} disabled={embeddingLoading}>
+                {embeddingLoading ? 'Downloading...' : 'Download Embedding Model'}
+              </Button>
             </>
           )}
         </CardContent>

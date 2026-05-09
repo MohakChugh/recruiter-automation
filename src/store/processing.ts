@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 export interface ProcessingState {
-  status: 'idle' | 'parsing' | 'extracting' | 'geocoding' | 'scoring' | 'complete'
+  status: 'idle' | 'parsing' | 'extracting' | 'geocoding' | 'scoring' | 'tier2' | 'complete'
   totalFiles: number
   parsedFiles: number
   extractedFiles: number
