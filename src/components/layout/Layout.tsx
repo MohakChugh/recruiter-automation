@@ -1,10 +1,17 @@
+import { useEffect } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { Briefcase, Settings, Home, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StatusIndicator } from './StatusIndicator'
+import { useSystemHealth } from '@/store/health'
 
 export function Layout() {
   const location = useLocation()
+  const checkHealth = useSystemHealth(s => s.checkHealth)
+
+  useEffect(() => {
+    checkHealth()
+  }, [])
 
   return (
     <div className="min-h-screen bg-background">

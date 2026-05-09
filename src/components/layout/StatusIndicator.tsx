@@ -6,8 +6,9 @@ export function StatusIndicator() {
   const health = useSystemHealth()
 
   const overallStatus = health.allGreen ? 'green' : health.anyRed ? 'red' : 'yellow'
-  const label = health.allGreen ? 'All Systems Ready' :
-                health.anyRed ? 'Degraded Mode' : 'Partial AI Mode'
+  const label = health.allGreen ? 'Full AI Mode' :
+                health.anyRed ? 'Degraded' :
+                (health.dbHealthy && health.geocodingOnline) ? 'Ready — AI models optional' : 'Partial Mode'
 
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">

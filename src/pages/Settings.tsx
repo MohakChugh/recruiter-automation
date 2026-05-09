@@ -126,12 +126,12 @@ export function Settings() {
   }
 
   const items = [
-    { label: 'WebGPU', available: health.webgpuAvailable, detail: 'GPU acceleration for AI models' },
-    { label: 'LLM Model', available: health.llmLoaded, detail: 'Phi-3.5 Mini for deep analysis' },
-    { label: 'Embedding Model', available: health.embeddingLoaded, detail: 'GTE-small for similarity' },
-    { label: 'Geocoding', available: health.geocodingOnline, detail: 'Nominatim location service' },
-    { label: 'Database', available: health.dbHealthy, detail: 'IndexedDB local storage' },
-    { label: 'Cloud Sync', available: health.syncAvailable, detail: 'GitHub Gist backup' },
+    { label: 'WebGPU', available: health.webgpuAvailable, detail: 'GPU acceleration for AI models', unavailableText: 'Not Supported' },
+    { label: 'LLM Model', available: health.llmLoaded, detail: 'Phi-3.5 Mini for deep analysis', unavailableText: 'Not Loaded' },
+    { label: 'Embedding Model', available: health.embeddingLoaded, detail: 'GTE-small for similarity', unavailableText: 'Not Loaded' },
+    { label: 'Geocoding', available: health.geocodingOnline, detail: 'Nominatim location service', unavailableText: 'Offline' },
+    { label: 'Database', available: health.dbHealthy, detail: 'IndexedDB local storage', unavailableText: 'Error' },
+    { label: 'Cloud Sync', available: health.syncAvailable, detail: 'GitHub Gist backup', unavailableText: 'Not Configured' },
   ]
 
   return (
@@ -160,7 +160,7 @@ export function Settings() {
                 </div>
               </div>
               <Badge variant={item.available ? "success" : "warning"}>
-                {item.available ? 'Ready' : 'Unavailable'}
+                {item.available ? 'Ready' : item.unavailableText}
               </Badge>
             </div>
           ))}
